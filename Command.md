@@ -222,18 +222,25 @@ git log origin/main..main //show commits in local mian, but not in origin main b
 ##### Typical workflow
 
 ```
-# 1️⃣ Update your local main with the latest remote changes
+//Morning - Sync your local repo with the team
 git checkout main
 git pull origin main
-
-# 2️⃣ Switch to your working branch
+# Merge main into test before doing new work
 git checkout test
+git checkout -b test // start something new
+git merge main
 
-# 3️⃣ Rebase or merge main into test to stay up-to-date
-git rebase main   # or git merge main
 
-# 4️⃣ After finishing work, merge test back to main
+//During the day - develop and commit locally
+# edit code files, fix bugs, write features
+git add .
+git commit -m "Day 0 commit"
+
+
+//End of the day - prepare to upload / sync
+# Merge test back into main when done
 git checkout main
+git pull origin main 
 git merge test
 git push origin main
 ```
