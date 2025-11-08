@@ -122,15 +122,26 @@ sudo brew install git
 
   ```
   git init
-  git remote add origin https://github.com/franklin-zzh/my_web.git //添加远程连接地址
-  git remote set-url origin git@github.com:franklin-zzh/my_web.git
+  git remote add origin https://github.com/franklin-zzh/my_web.git //https 添加远程连接地址
+  git remote set-url origin git@github.com:franklin-zzh/my_web.git //ssh
   git pull origin master
   git add . //add后面跟"."表明添加所有文件，如果只需要添加个别文件直接后面跟文件名，也可后面跟多个文件名
   git commit -m "first submit" //注释说明，每次提交新文件或更改的文件都需要添加注释
-  git push -u origin master //将add的文件push到github仓库中去
+  git push -u origin master //将add的文件push到github仓库中去     --force
+  git pull
+  git push
   ```
 
-  
+##### Check Branch
+
+```
+git branch // check current branch
+git branch test //create test branch
+git checkout(switch) test //switch to test branch
+git branch -m <HEAD-new-name> //change current head branch name
+git branch -m <old-name> <new-name> //non-head branch
+
+```
 
 
 
