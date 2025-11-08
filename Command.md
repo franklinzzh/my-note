@@ -241,6 +241,7 @@ git commit -m "Day 0 commit"
 # Merge test back into main when done
 git checkout main
 git pull origin main 
+git checkout test
 git merge test
 git push origin main
 ```
