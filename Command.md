@@ -163,8 +163,30 @@ git branch -m <old-name> <new-name> //non-head branch
 ```
 git switch main // merge always merge to the HEAD branch
 git merge test // the branch need to merge
+//have merge commit when two branch both have unique commits
 git push
 ```
+
+###### Merge & Rebase diff
+
+> `Before` rebase:
+>
+> A --- B --- C (main)
+>        \
+>         D --- E (feature)
+>
+> `After` rebase:
+>
+> A --- B --- C --- D′ --- E′ (test) // Since add a new `C` after `B`
+
+| Concept                        | Rebase  | Merge |
+| ------------------------------ | ------- | ----- |
+| Changes commit IDs             | Yes     | No    |
+| Safe for shared branches       | No      | Yes   |
+| Requires force push            | Usually | No    |
+| Others can “pull again” safely | No      | Yes   |
+
+Normally, when others use the same repository, don't use `rebase`, `merge` is a safer way to commit to main.
 
 ##### Publish branch
 
@@ -187,6 +209,36 @@ git checkout --track origin/<base-branch>
 git branch -d <branch-name> // can't delete the current HEAD branch
 git push origin --delete branch_name // remove remote branch
 ```
+
+##### Comparing branch
+
+```
+git log main..test // shows commits in test, but not in main branch
+git log origin/main..main //show commits in local mian, but not in origin main branch
+```
+
+
+
+##### Typical workflow
+
+```
+# 1️⃣ Update your local main with the latest remote changes
+git checkout main
+git pull origin main
+
+# 2️⃣ Switch to your working branch
+git checkout test
+
+# 3️⃣ Rebase or merge main into test to stay up-to-date
+git rebase main   # or git merge main
+
+# 4️⃣ After finishing work, merge test back to main
+git checkout main
+git merge test
+git push origin main
+```
+
+
 
 ##### Branch Switch based on Commits
 
