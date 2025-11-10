@@ -67,7 +67,9 @@ java -v
 
 
 
-### - Github无法访问
+### - Github
+
+##### Github无法访问
 
 * **编辑 `hosts` 文件**
 
@@ -89,6 +91,14 @@ ping raw.githubusercontent.com
 ```
 
 
+
+##### Update Repository Name
+
+```
+git remote -v // check current remote URL
+git remote set-url origin https://github.com/franklin-zzh/XXXXXX.git //Updated with the new project name
+git remote -v
+```
 
 
 
@@ -114,11 +124,13 @@ git log --oneline -5 // show last 5 commit log
 
 > https://blog.csdn.net/weixin_42280089/article/details/88937175
 >
+> ```dash
 > /my-project/
 > ├── .git/           # Git 仓库所在
 > ├── src/            # 项目的源代码
 > ├── README.md       # 项目文档
 > └── .gitignore      # Git 忽略文件
+> ```
 
 * Create github repository 
 
@@ -214,7 +226,7 @@ Normally, when others use the same repository, don't use `rebase`, `merge` is a 
 ##### Publish branch
 
 ```
-git push -u origin <local-branch> // Upload a local branch for the first time
+git push -u origin local-branch // Upload a local branch for the first time
 ```
 
 ##### Tracking branch
@@ -222,14 +234,14 @@ git push -u origin <local-branch> // Upload a local branch for the first time
 Connecting branches to each other
 
 ```
-git branch --track <new-branch> origin/<base-branch>
-git checkout --track origin/<base-branch>
+git branch --track new-branch origin/base-branch
+git checkout --track origin/base-branch
 ```
 
 ##### Delete branch
 
 ```
-git branch -d <branch-name> // can't delete the current HEAD branch
+git branch -d branch-name // can't delete the current HEAD branch
 git push origin --delete branch_name // remove remote branch
 ```
 
