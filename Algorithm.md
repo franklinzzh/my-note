@@ -1,8 +1,8 @@
 ### Algorithm
 
-###### 滑动窗口+双指针
+#### -滑动窗口+双指针
 
-###### 二分查找
+#### -二分查找
 
 框架：
 
@@ -137,7 +137,228 @@ int lowBoundary(int[] nums, int target) {
     }
 ```
 
+#### -递归
+
+​	递归分为`遍历`和`分解问题`
+
+> `遍历型`递归的重点是「**走完所有路径**」，而不是「当前路径的值会如何影响最终结果」。它更关注**完整地访问状态空间**，而不是**组合子问题结果**。
+>
+> - 我们不关心 `path` 的值是否影响后面结果；
+> - 关键是“**所有可能的 path 都被访问到**”；
+> - 即使某条路径“没意义”，我们也会走到终点，然后自然被过滤掉。
+>
+> 遍历的主要作用：**收集叶子节点上的结果的作用**
+>
+> `分解型`递归关心**当前子问题的结果**，因为它要被合并进最终答案。
+>
+> - 每次递归返回一个“子问题的结果”；
+> - 父层利用这些结果进行**计算 / 组合 / 汇总**
+> - 当前路径的状态直接影响最终结果。
+
+​	遍历：void	分解：return T
+
+​	对于一些题目，两种方法都可行，只不过写起来不太一样，但效率相同
+
+##### 	总结
+
+- 首先，这个问题是否可以抽象成一棵**树结构**？如果可以，那么就要用递归算法了。
+- 如果要用递归算法，那么就思考「**遍历**」和「**分解**问题」这两种思维模式，看看哪种**更适合**这个问题。
+- 如果用「**分解**问题」的思维模式，那么一定要写清楚这个**递归函数的定义**是什么，然后利用这个定义来分解问题，利用子问题的答案推导原问题的答案；如果用「**遍历**」的思维模式，那么要用一个**无返回值**的递归函数，单纯起到遍历递归树，收集目标结果的作用。
+
+> 「分解问题」的思维模式就对应着后面要讲解的 [动态规划算法](https://labuladong.online/algo/essential-technique/dynamic-programming-framework/) 和 [分治算法](https://labuladong.online/algo/essential-technique/divide-and-conquer/)，「遍历」的思维模式就对应着后面要讲解的 [DFS/回溯算法](https://labuladong.online/algo/essential-technique/backtrack-framework/)。
 
 
 
+#### -二叉树核心算法
+
+`traverse` 函数：一个遍历二叉树所有节点的函数
+
+```java
+//遍历数组
+traverse(int[] arr, int i) {
+	if (index == arr.length) {
+        return;
+    }
+    // 前序位置
+    traverse(arr, i + 1);
+    // 后序位置	
+}
+
+// 迭代遍历单链表
+void traverse(ListNode head) {
+    for (ListNode p = head; p != null; p = p.next) {
+
+    }
+}
+//遍历链表
+traverse(ListNode head) {
+    if (head.next == null) {
+        return;
+    }
+    traverse(head.next);	
+}
+```
+
+Binary Tree could also use `while` loop to traverse:
+
+```java
+void inorderIterative(TreeNode root) {
+    Stack<TreeNode> stack = new Stack<>();
+    TreeNode curr = root;
+
+    while (curr != null || !stack.isEmpty()) {
+        // go left as far as possible
+        while (curr != null) {
+            stack.push(curr);
+            curr = curr.left;
+        }
+
+        curr = stack.pop();
+        System.out.println(curr.val); // visit node
+        curr = curr.right;            // go right next
+    }
+}
+
+```
+
+BFS use `queue` to do Level-Order traverse.
+
+##### 前序 中序 后序
+
+**前(pre-order) 中(in-order) 后序(post-order)是遍历二叉树过程中处理每一个节点的三个特殊时间点**，绝不仅仅是三个顺序不同的 List：
+
+- 前序位置的代码在刚刚进入一个二叉树节点的时候执行；
+- 后序位置的代码在将要离开一个二叉树节点的时候执行；
+- 中序位置的代码在一个二叉树节点左子树都遍历完，即将开始遍历右子树的时候执行。
+
+LeetCode 226 [翻转二叉树](https://leetcode.cn/problems/invert-binary-tree/description/)
+
+```java
+class Solution {
+    public TreeNode invertTree(TreeNode root) {
+        traverse(root);
+        return root;
+    }
+    void traversePre(TreeNode root) {
+        if (root == null) return;
+      	// pre-order
+        TreeNode memo = root.left;
+        root.left = root.right;
+        root.right = memo;
+      
+        traversePre(root.left);
+        traversePre(root.right);
+    }
+  	void traverseIn(TreeNode root) {
+        if (root == null) return;
+      	//in-order
+        traverseIn(root.left);
+      	TreeNode memo = root.left;
+        root.left = root.right;
+        root.right = memo;
+        traverseIn(root.left);
+    }
+}
+```
+
+> 此刻如果使用中序遍历，要注意此时root.left/root.right已经变化
+>
+> 所以 `traverseIn(root.right)` 就会将原始的 `root.left` 重新traverse一遍；
+>
+> 导致 `traverse(root.left)` 两遍 — 即返回最初状态；而 `root.right` 子树完全未触及
+>
+> * 输入： [4,2,7,1,3,6,9]
+> * 输出： [4,7,2,6,9,1,3]
+> * 预期结果： [4,7,2,9,6,3,1]
+
+
+
+#### -回溯算法
+
+```java
+// 回溯算法框架
+void backtrack(...) {
+    // base case
+    if (...) return;
+
+    for (int i = 0; i < ...; i++) {
+        // 做选择
+        ...
+
+        // 进入下一层决策树
+        backtrack(...);
+
+        // 撤销刚才做的选择
+        ...
+    }
+}
+```
+
+
+
+#### -回溯/DFS/动态规划 区别联系
+
+- 动态规划算法属于分解问题（分治）的思路，它的关注点在整棵「子树」。
+- 回溯算法属于遍历的思路，它的关注点在节点间的「树枝」。
+- DFS 算法属于遍历的思路，它的关注点在单个「节点」。
+
+```java
+// DFS 算法把「做选择」「撤销选择」的逻辑放在 for 循环外面
+void dfs(Node root) {
+    if (root == null) return;
+    // 做选择
+    print("enter node %s", root);
+    for (Node child : root.children) {
+        dfs(child);
+    }
+    // 撤销选择
+    print("leave node %s", root);
+}
+
+// 回溯算法把「做选择」「撤销选择」的逻辑放在 for 循环里面
+void backtrack(Node root) {
+    if (root == null) return;
+    for (Node child : root.children) {
+        // 做选择
+        print("I'm on the branch from %s to %s", root, child);
+        backtrack(child);
+        // 撤销选择
+        print("I'll leave the branch from %s to %s", child, root);
+    }
+}
+```
+
+> DFS  关注单个当前节点的信息
+>
+> 回溯 则考虑两节点之间的信息
+>
+> **回溯 = 带状态恢复的 DFS。**
+>  DFS 只走路；回溯在走路的同时考虑“走哪条、撤回来再试另一条”。
+
+
+
+#### 层序遍历
+
+```java
+// 输入一棵二叉树的根节点，层序遍历这棵二叉树
+void levelTraverse(TreeNode root) {
+    if (root == null) return;
+    Queue<TreeNode> q = new LinkedList<>();
+    q.offer(root);
+    int depth = 1;
+    while (!q.isEmpty()) {
+        int size = q.size();
+        for (int i = 0; i < size; i++) {
+            TreeNode cur = q.poll();
+           	if (cur.left != null) {
+                q.offer(cur.left);
+            }
+            if (cur.right != null) {
+                q.offer(cur.right);
+            }
+        }
+        depth++;
+    }
+}
+```
 

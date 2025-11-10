@@ -8,6 +8,8 @@
 | ScreenShoot(Save to local) | `Shift-Command-3` `Shift-Command-4` `Shift-Command-5`      |
 | ScreenShoot(paste)         | `Shift-Option-Command-3`  3(full-screen) 4(portion) 5(app) |
 | Go to a file path          | Finder `Command + Shift + G`                               |
+|                            |                                                            |
+|                            |                                                            |
 
 | Symbol            | Meaning                                    |
 | ----------------- | ------------------------------------------ |
@@ -41,7 +43,26 @@
 ```
 # show all files
 ls   # On macOS/Linux
+sudo mkdir 
+sudo mv
 
+tar -xzf + `file-name`.tar.gz // extract a .tar.gz file
+```
+
+
+
+### - Environment Variables 
+
+```
+nano ~/.zshrc // edit the file
+
+Ctrl + O(Big O) // save, press Enter
+Ctrl + X // quit
+
+source ~/.zshrc // let update works
+
+mvn -v // tes 
+java -v
 ```
 
 
@@ -73,6 +94,8 @@ ping raw.githubusercontent.com
 
 ### - Git command
 
+##### Git Setup
+
 >  `sudo` at the beginning to execute it with **administrator** privileges
 
 ```
@@ -87,7 +110,7 @@ git log --oneline -5 // show last 5 commit log
 
 
 
-##### SetUp Git repository
+##### Github Setup
 
 > https://blog.csdn.net/weixin_42280089/article/details/88937175
 >
@@ -251,4 +274,86 @@ git push origin main
 ##### Branch Switch based on Commits
 
 When you switch between branches such as `main` and `test`, Git swaps the file contents to match the commit versions associated with each branch. For example, if you switch from `test` to `main`, any recent changes you made to `Command.md` on the `test` branch won’t appear in the `main` branch.
+
+
+
+### - Java & IntelliJ IDE
+
+```
+touch ~/.zshrc
+open -e ~/.zshrc
+
+//write in .zshrc
+# === Java JDK ===
+export JAVA_HOME="/Users/franklin/Desktop/NO_Drive/tools/Java/jdk-21.0.9.jdk/Contents/Home" 
+export PATH=$JAVA_HOME/bin:$PATH
+
+java -version
+javac -version
+```
+
+##### Maven Setup
+
+* 解压 `.zip` 包
+
+* `maven-x.x.x/conf/setting.xml` 修改配置文件
+
+  * 改 `local- repository` 地址
+  * 改私服mirror
+
+  ```
+    <mirrors>
+      <mirror>
+        <id>internal-repository</id>
+        <name>Maven Repository Manager running on repo.mycompany.com</name>
+        <url>http://repo.mycompany.com/proxy</url>
+        <mirrorOf>*</mirrorOf>
+      </mirror>
+    </mirrors>
+  ```
+
+* 配置环境变量
+
+  ```
+  nano ~/.zshrc
+  # Maven environment variables
+  export M2_HOME=/Users/franklin/Desktop/NO_Drive/tools/Maven/apache-maven-3.9.11
+  export PATH=$M2_HOME/bin:$PATH
+  source ~/.zshrc
+  
+  mvn -v // 验证
+  ```
+
+##### Idea中配置Maven(全局)
+
+打开 `All Settings` （因为做全局配置，不要再项目中打开）
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251110125101607.png" alt="image-20251110125101607" style="zoom:40%;" />
+
+* `Build, Execution, Deployment` 中选择 `Maven` 
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251110124715486.png" alt="image-20251110124715486" style="zoom:50%;" />
+
+* `Maven-Runner` 选择JRE版本 21
+* `Build, Execution, Deployment` 的 `Compiler-Java compiler`选择 `Porject bytetype version = 21`
+
+新建project
+
+选择project JDK版本
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251110125846858.png" alt="image-20251110125846858" style="zoom:50%;" />
+
+最后新建module（模块）来控制不同层
+
+
+
+### - MySQL
+
+```
+sc query MySQL80
+
+sc config MySQL80 start= auto
+
+net start MySQL80
+```
 

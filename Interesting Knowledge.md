@@ -1,6 +1,6 @@
-### Interesting Knowledge
+# Interesting Knowledge
 
-##### XOR
+### - XOR
 
 ###### AND
 
@@ -21,14 +21,18 @@
 > XOR is Exclusive OR;
 >
 > -  if either input is true, then the result is true; 
-> - but if both inputs are true, then the result is false.
+> -  but if both inputs are true, then the result is false.
 >
 > 0 XOR 0 = 0
 > 1 XOR 0 = 1
 > 0 XOR 1 = 1
 > 1 XOR 1 = 0
 
-##### 子集
+
+
+
+
+### - 子集
 
 Subset(子集)：不连续
 
@@ -40,7 +44,36 @@ Subarray(子数组)：必须连续
 
 
 
+# Tips
 
+Convert char to int:
+
+```java
+char c = '7';
+int i = Integer.parseInt(String.valueOf(c));
+int i = c - '0';
+int i = Character.getNumericValue(ch);
+```
+
+Convert String to int:
+
+```java
+String seq = "20001001";
+int Year = Integer.praseInt(seq.substring(0,4));
+int Day = Integer.valueOf(s.substring(6, 8))
+```
+
+> ```
+> str.substring(begin, end)
+> ```
+
+> Params: 
+>
+> * `beginIndex`  – the begin index, inclusive.
+>
+> * `endIndex`  – the end index, exclusive.
+
+[Reading](https://www.geeksforgeeks.org/java-program-to-convert-char-to-int/) for more Convert.
 
 
 

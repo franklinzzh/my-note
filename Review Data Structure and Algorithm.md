@@ -2,9 +2,9 @@
 
 # **Review Data Structure and Algorithm**
 
-#  Course Topics Overview 
+##  Course Topics Overview 
 
-## -Review Basic
+### -Review Basic
 
 ##### static:
 
