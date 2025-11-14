@@ -170,7 +170,7 @@ Maven坐标（Maven Coordinates） 是项目唯一标识
 
 添加[repository](https://mvnrepository.com/)
 
-```
+```xml
 		<!--配置依赖-->
     <dependencies>
         <dependency>
@@ -197,6 +197,16 @@ Maven坐标（Maven Coordinates） 是项目唯一标识
 
 
 
+##### 依赖范围
+
+```xml
+<scope>...</scope>
+<scope>compile</scope> //默认，主程序，测试，打包，都可以使用
+<scope>test</scope> //仅测试程序内可以使用
+```
+
+
+
 ##### Maven生命周期
 
 > Maven 生命周期（Lifecycle）定义了一个 **项目从清理、编译、测试、打包到部署** 的完整流程。
@@ -211,15 +221,161 @@ Maven坐标（Maven Coordinates） 是项目唯一标识
 
 
 
+```bash
+del /s *.lastUpdated //删除未下载成功的依赖
+```
 
 
 
+### - Web基础
 
-### - Java project
+##### HTTP协议
+
+
+
+###### -HTTP `Request` Header
+
+> `Client` generated this one
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113124636803.png" alt="image-20251113124636803" style="zoom:50%;" />
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113134038948.png" alt="image-20251113134038948" style="zoom:50%;" />
+
+
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113133952338.png" alt="image-20251113133952338" style="zoom:50%;" />
+
+
+
+###### -HTTP `Response` Header
+
+> `Server` generated this one
+
+![image-20251113134241118](/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113134241118.png)
+
+![image-20251113165935578](/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113165935578.png)
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113155711073.png" alt="image-20251113155711073" style="zoom:50%;" />
+
+**HTTP Status Codes** 
+
+| Status  | Meaning               | Typical Cause                                                |
+| ------- | --------------------- | ------------------------------------------------------------ |
+| **200** | Request succeeded     | The client’s request was valid and the server successfully returned data. |
+| **404** | Resource not found    | Incorrect URL, missing endpoint, or the requested resource has been removed. |
+| **500** | Internal server error | A server-side failure occurred, often due to an unhandled Java exception in the backend. |
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113163033114.png" alt="image-20251113163033114" style="zoom:50%;" />
+
+
+
+##### `package` 命名
 
  `package org.example` 是分层命名空间（namespace separator） treated as `org/example/`
 
 命名方式：反转的域名（reversed domain name); 域名是唯一的，反转后也能保证包名全局唯一，防止冲突
+
+
+
+##### `@RestController`
+
+```java
+@Controller
+@ResponseBody //Return JSON AUTOMATICALLY
+public @interface RestController {
+    @AliasFor(
+        annotation = Controller.class
+    )
+    String value() default "";
+}
+```
+
+
+
+##### DTO & Repository
+
+**① 安全性**
+
+> 不把数据库字段直接暴露给前端。
+
+**② 防止前端乱改敏感字段**
+
+> * passwordHash
+> * role
+> * isDeleted
+> * internalFlag
+>
+> 这些字段在 Entity 中存在，但 DTO 中不能出现。
+
+**③ 避免数据库结构变化影响前端**
+
+> 如果 Entity 改动了，DTO 不需要改动。
+
+**④ 更清晰的业务结构**
+
+> DTO = 视图层模型
+> Entity = 数据层模型
+
+##### 分层解耦
+
+###### - 三层架构
+
+* Controller
+* Service
+* Dao
+
+###### - 分层解耦
+
+
+
+###### - `IOC` & `DI` 入门
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113184315625.png" alt="image-20251113184315625" style="zoom:50%;" />
+
+
+
+###### - IOC详解
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113194541864.png" alt="image-20251113194541864" style="zoom:50%;" />
+
+
+
+###### - `DI`详解
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113211536802.png" alt="image-20251113211536802" style="zoom:50%;" />
+
+
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251113211728090.png" alt="image-20251113211728090" style="zoom:50%;" />
+
+### - MySQL
+
+##### Startup 的数据库架构演进（真实流程）
+
+> **阶段 A：MVP 初期**
+>
+> * 本地数据库：MySQL Docker
+> * 线上数据库：单机 MySQL (EC2)
+>
+> **阶段 B：上线初期**
+>
+> * Prod 使用 RDS + 只读副本
+> * Dev、Staging 各自独立数据库
+>
+> **阶段 C：增长期**
+>
+> * 增加缓存（Redis）
+> * 增加消息队列（Kafka / RabbitMQ）
+> * 将读写分离
+> * 数据库分库分表（分租户 / 分地域）
+>
+> **阶段 D：成熟期**
+>
+> * 数据仓库（BigQuery / Snowflake）
+> * 数据管道（Airflow）
+> * 实时分析（ClickHouse / Druid）
+
+
 
 
 

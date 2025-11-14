@@ -1,8 +1,6 @@
-
-
 ## Command 
 
-### Mac Command
+### - Mac Command
 
 | **Function**               | **Hotkey (macOS)**                                         |
 | -------------------------- | ---------------------------------------------------------- |
@@ -174,7 +172,7 @@ git log --oneline -5 // show last 5 commit log
 
 In Github repository, clone with ` HTTPS` or `SSH`
 
-```
+```bash
 git init
 git remote add origin https://github.com/franklin-zzh/my_web.git //https 添加远程连接地址
 git remote set-url origin git@github.com:franklin-zzh/my_web.git //ssh
@@ -183,6 +181,16 @@ git add . //add后面跟"."表明添加所有文件，如果只需要添加个�
 git commit -m "first submit" //注释说明，每次提交新文件或更改的文件都需要添加注释
 git push -u origin main //将add的文件push到github仓库中去     --force
 ```
+
+##### Check top-level 	
+
+```bash
+git rev-parse --show-toplevel 
+ls -a | grep .git // show .git under this folder
+sudo rm -rf .git //remove .git if you have a nested git repo
+```
+
+
 
 ##### Push & Pull
 
@@ -201,7 +209,6 @@ git branch test //create test branch
 git checkout(switch) test //switch to test branch
 git branch -m <HEAD-new-name> //change current head branch name
 git branch -m <old-name> <new-name> //non-head branch
-
 ```
 
 ##### Merge branch
@@ -267,8 +274,8 @@ git log origin/main..main //show commits in local mian, but not in origin main b
 
 ##### Typical workflow
 
-```
-//Morning - Sync your local repo with the team
+```bash
+# Morning - Sync your local repo with the team
 git checkout main
 git pull origin main
 # Merge main into test before doing new work
@@ -277,13 +284,13 @@ git checkout -b test // start something new
 git merge main
 
 
-//During the day - develop and commit locally
+# During the day - develop and commit locally
 # edit code files, fix bugs, write features
 git add .
 git commit -m "Day 0 commit"
 
 
-//End of the day - prepare to upload / sync
+#End of the day - prepare to upload / sync
 # Merge test back into main when done
 git checkout main
 git pull origin main 
@@ -297,6 +304,54 @@ git push origin main
 ##### Branch Switch based on Commits
 
 When you switch between branches such as `main` and `test`, Git swaps the file contents to match the commit versions associated with each branch. For example, if you switch from `test` to `main`, any recent changes you made to `Command.md` on the `test` branch won’t appear in the `main` branch.
+
+##### Holding two GitHub accounts
+
+`Personal` & `Work`
+
+```bash
+# Generate two SSH keys
+ssh-keygen -t ed25519 -C "personal@outlook.com" -f ~/.ssh/id_personal
+ssh-keygen -t ed25519 -C "work@gmail.com" -f ~/.ssh/id_work
+
+# Used to change passphrase
+ssh-keygen -p -f ~/.ssh/id_personal
+
+#open id_rsa file
+vim ~/.ssh/id_personal.pub //this is the public one
+
+# Add SSH config to auto-switch accounts
+nano ~/.ssh/config
+```
+
+```bash
+# Personal GitHub
+Host github-personal
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_personal
+
+# Work GitHub
+Host github-work
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_work
+```
+
+```bash
+# Go to local repo
+# the repo name is the same as github repo's name
+git remote -v # check for repo name
+git remote set-url origin git@github-personal:franklinzzh/repo.git
+git remote set-url origin git@github-work:franklin-zzh/repo.git
+
+# set Per-repository identity
+git config user.name "Your Name"
+git config user.email "personal@example.com"
+
+```
+
+
 
 
 
@@ -314,9 +369,6 @@ which mysql
 
 mysql --version
 mysql -u root -p
-
-
-
 ```
 
 
@@ -326,10 +378,10 @@ mysql -u root -p
 ```
 which mysqld
 ls /Library/LaunchDaemons/com.mysql.mysql.plist //检查是否存在
-sudo nan
+sudo nano /Library/LaunchDaemons/com.mysql.mysqld.plist //不存在创建
 ```
 
-o /Library/LaunchDaemons/com.mysql.mysqld.plist //不存在创建
+//XML内容
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
