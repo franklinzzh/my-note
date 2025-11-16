@@ -1,5 +1,33 @@
 ## Management System
 
+
+
+### - 项目流程
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251115175920799.png" alt="image-20251115175920799" style="zoom:50%;" />
+
+**① 设计数据结构（DB 设计）**
+
+例如 user 表、product 表、order 表…
+
+**② 写接口文档（Swagger 或 Markdown）**
+
+包含：
+
+* URL
+* method
+* request body
+* response body
+* 返回格式
+* 示例
+* 错误码
+
+**③ Start coding：按接口文档开发后端**
+
+Controller → Service → Mapper → XML → 测试
+
+
+
 ### - Web标准
 
 * HTML	负责网页结构
@@ -374,6 +402,517 @@ public @interface RestController {
 > * 数据仓库（BigQuery / Snowflake）
 > * 数据管道（Airflow）
 > * 实时分析（ClickHouse / Druid）
+
+
+
+
+
+##### SQL语句
+
+> * DDL (Data Defination Language)	定义
+> * DML (Data Manipulation  Language)    操作，CRUD
+> * DCL  (Data Query Language )  查询
+
+
+
+###### <img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251114123607219.png" alt="image-20251114123607219" style="zoom:30%;" />
+
+
+
+###### - DDL
+
+* 数据库
+
+```sql
+show databases;
+select database(); //target one
+use database_name; 
+create database if not exists database_name default charset utf8mb4; //default utf8mb4
+delete data if exists
+```
+
+
+
+###### - DQL
+
+The SQL engine works like this:
+
+> 1. FROM + WHERE
+> 2. GROUP BY
+> 3. AGGREGATE (COUNT, SUM...)
+> 4. HAVING (filters aggregated results)
+> 5. SELECT
+> 6. ORDER BY
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251114165035470.png" alt="image-20251114165035470" style="zoom:40%;" />
+
+* 
+
+
+
+```sql
+-- typeId is 1 or 9
+SELECT * FROM baiology.user WHERE user_type_id in '1,9'; 
+-- only one char in username
+SELECT * FROM baiology.user WHERE user_name like '_';
+-- start as a/A in username
+SELECT * FROM baiology.user WHERE user_name like 'a%';
+-- include bb in username
+SELECT * FROM baiology.user WHERE user_name like '%bb%';
+```
+
+
+
+##### **分组查询**
+
+```sql
+-- COUNT
+
+-- count doesn't include null value
+select count(id) from user; -- cound {id} not null
+select count(*) from user; -- efficient one
+select count(1) from user; -- same as count(*)
+
+select avg(salary) from user;
+
+-- GROUP BY
+SELECT dept, AVG(salary)
+FROM emp
+GROUP BY dept;
+
+-- error! cannot casually use SELECT * after group by
+select * from user group by user_type_id; 
+
+select user_type_id, count(1) from user group by user_type_id;
+-- find users registered at date'2024-01-01' and after, group by user type, return group count larger than 5 users
+-- WHERE -> GROUP BY -> HAVING
+select user_type_id, count(1)from user where create_time >= '2024-01-01' group by user_type_id having count(1) >= 5; 
+
+-- ORDER BY
+select id, user_name from user order by create_time, update_time desc;
+
+-- LIMIT
+select id, user_name from user order by create_time, user_type_id desc limit 0, 5;
+-- show i page
+select id, user_name from user order by create_time, user_type_id desc limit (i-1)*5, 5;
+```
+
+`GROUP BY `必须搭配聚合函数
+
+* `COUNT()` → 数量
+* `SUM()` → 求和
+* `AVG()` → 求平均
+* `MAX()` → 最大值
+* `MIN()` → 最小值
+
+
+
+
+
+##### `foreign key`
+
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE orders (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+
+    CONSTRAINT fk_orders_users -- fk_<child_table>_<parent_table>
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE   -- 删除user时自动删除order
+        ON UPDATE CASCADE
+);
+```
+
+```sql
+-- 建完表后，添加外键
+alter table  表名  add constraint  外键名称  foreign key(外键字段名) references 主表(主表列名);
+```
+
+
+
+##### `Delete table data with fk`
+
+```sql
+SET FOREIGN_KEY_CHECKS = 0;
+
+TRUNCATE TABLE orders;
+TRUNCATE TABLE users;
+
+SET FOREIGN_KEY_CHECKS = 1;
+```
+
+
+
+##### 多表查询
+
+笛卡尔积
+
+> emp 的每一行 × dept 的每一行，会全部组合成结果。
+
+```sql
+select * from  emp , dept;
+```
+
+`JOIN`
+
+Inner Join / Outer Join
+
+> correct one
+
+```sql
+-- inner join, only show data exists on both tables
+SELECT * FROM emp JOIN dept ON emp.dept_id = dept.id;
+
+-- left outer join, show all data in left, even if right not exists
+SELECT * FROM emp LEFT JOIN dept ON emp.dept_id = dept.id;
+-- right outer join, show all data in left, even if left not exists
+SELECT * FROM emp RIGHT JOIN dept ON emp.dept_id = dept.id;
+
+-- 查询所有员工的ID，姓名，及所属的部门名称
+select emp.id, emp.name, dept.name from emp left join dept on emp.dept_id = dept.id;
+```
+
+
+
+##### Subquery
+
+标量子查询（Scalar Subquery）
+
+```sql
+SELECT * FROM t1 WHERE column1 = (SELECT column1 FROM t2 ...);
+```
+
+列子查询（Column Subquery）
+
+```sql
+WHERE column1 IN (SELECT dept_id FROM dept)
+```
+
+行子查询（Row Subquery）
+
+```sql
+WHERE (a,b) = (SELECT x,y FROM t2 WHERE id=1)
+```
+
+表子查询（Table Subquery）
+
+```sql
+SELECT * FROM (SELECT id,name FROM t2) AS temp;
+```
+
+Example 
+
+`Scalar Subquery`
+
+```sql
+-- 查询 最早入职 的员工信息
+select * from emp where emp.entry_date = ?;
+select min(emp.entry_date) from emp;
+select * from emp where (select min(emp.entry_date) from emp);
+
+-- 查询在 阮小五 入职之后入职的员工信息
+select emp.entry_date from emp where emp.name = '阮小五';
+select * from emp where emp.entry_date > (select emp.entry_date from emp where emp.name = '阮小五');
+```
+
+`Column Subquery`
+
+```sql
+-- 查询 "教研部" 和 "咨询部" 的所有员工信息
+select dept.id from dept where dept.name = '教研部' OR dept.name = '咨询部';
+select * from emp where emp.dept_id in (select dept.id from dept where dept.name = '教研部' OR dept.name = '咨询部');
+```
+
+`Row Subquery`
+
+```sql
+-- 查询与 "李忠" 的薪资 及 职位都相同的员工信息
+select emp.salary, emp.job from emp where emp.name = '李忠';
+select * from emp where (salary, job) = (select emp.salary, emp.job from emp where emp.name = '李忠');
+```
+
+`Table Subquery`
+
+```sql
+-- 获取每个部门中薪资最高的员工信息
+select emp.id, max(emp.salary) from emp group by dept_id;
+select * from emp e, (select emp.id, max(emp.salary) as max_salary from emp group by dept_id) a where e.id = a.id and e.salary = a.max_salary;
+```
+
+##### More examples
+
+```sql
+-- 查询 "教研部" 性别为 男，且在 "2011-05-01" 之后入职的员工信息 。
+select * from emp as e, dept as d where e.dept_id = d.id and d.name = '教研部' and gender = 1 and entry_date > '2011-05-01';
+
+-- 查询工资 低于公司平均工资的 且 性别为男 的员工信息 。
+select * from emp CROSS JOIN salary < (select avg(salary) from emp) t where and gender = 1;
+```
+
+> `CROSS JOIN` saved avg druing this query lifetime.
+
+```sql
+-- 查询部门人数超过 10 人的部门名称
+select dept.name from emp as e join dept as d on e.dept_id = d.id group by e.dept_id having count(e.id) > 10;
+```
+
+> cannot using `GROUP BY`  inside 'WHERE'
+>
+> * WHERE 过滤的是“行” → GROUP BY 之前存在的数据
+> * HAVING 过滤的是“组” → GROUP BY 之后才出现的数据
+>
+> Order: FROM → WHERE → GROUP BY → HAVING
+
+```sql
+-- 查询在 "2010-05-01" 后入职，且薪资高于 10000 的 "教研部" 员工信息，并根据薪资倒序排序。
+select e.* from emp as e, dept as d on e.dept_id = d.id where e.entry_date > '2010-05-01' and e.salary > 10000 and d.name = '教研部' order by e.salary desc;
+
+-- 查询工资 低于本部门平均工资的员工信息 。
+select * from emp as e join dept as d on e.dept_id = d.id where ((id, salary) = (select dept_id, avg(salary) from emp group by dept_id)) as a having d.id = a.id and e.salary < a.salary;
+```
+
+
+
+
+
+### - MyBatis
+
+simpilfied JDBC on Dao
+
+##### JDBC vs. MyBatis
+
+> JDBC：
+>
+> * 配置文件是硬编码
+> * 处理SQL语句繁琐
+> * 启动释放资源，资源浪费，性能降低
+>
+> MyBatis
+>
+> * `.yml`文件统一配置，修改配置文件无需重新编译
+> * `@Mapper` 接口自动解析，封装对象
+> * `spring.datasource` 从数据库连接池获取链接，用完放回，可复用
+
+##### 数据库连接池
+
+> * 是一个容器，负责分配、管理数据库连接
+> * 允许重复使用现有数据库连接，不用重复建立 (资源复用；提升响应速度)
+> * 释放超过最大空闲时间的连接
+
+标准接口：`DataSource`
+
+```java
+Connection getConnection() throw SQLException;
+```
+
+
+
+##### #{...} vs. ${...}
+
+> `#{}` 是预编译参数占位符（PreparedStatement）——安全、会防 SQL 注入
+>
+> `${}` 是字符串拼接——危险、不做任何转义
+
+```
+SELECT * FROM user WHERE id = #{id}
+//Mybatis 自动把#转成？
+SELECT * FROM user WHERE id = ?
+```
+
+
+
+
+
+
+
+### - 依赖注入
+
+> `DI (Dependency Injection)`
+>
+> * `@Autowired` --使用较少
+> * 构造器注入
+
+字段注入（Autowired）：
+
+> 运行时注入：Spring 容器初始化 Bean 后， Spring 会用反射把 @Autowired 字段赋值
+
+
+
+构造器注入（RequiredArgsConstructor）：
+
+> 构造时注入：Java new 对象过程
+
+* 强制使用  final，依赖集中在顶部，方便查看
+* 依赖是类构造过程的一部分，不能为 null
+* 若依赖为 null，new UserService() **直接报错**
+* 方便测试
+
+
+
+# - 实战开发
+
+
+
+##### `MyBatis` query
+
+
+
+`SELECT`
+`INSERT INTO`
+`UPDATE`
+`DELETE FROM` 
+
+```sql
+INSERT INTO dept(column1, colume2) VALUES(#{entityName1}, #{entityName2})
+
+UPDATE dept SET column1 = '#{entityName1}', column2 = '#{entityName2}' WHERE id = #{id}
+```
+
+
+
+### `Controller` API
+
+`GET` - get
+`POST` - add
+`PUT` - update
+`DELETE` - delete
+
+##### Integer / Object
+
+> 遇到复杂情况，需要多个字段，使用DTO（object）
+>
+> 简单情况如 id，直接使用基本类型
+
+⚠️ `Integer` 可以为 `null` ；`int` 不能为 `null`; 所以接口一定要用包装类
+
+
+
+`@PathVariable`
+
+`http://localhost:8080/depts/1`
+
+```java
+@GetMapping("/depts/{id}")
+public Result getDept(@PathVariable Integer id) {}
+```
+
+
+
+`@RequestBody`
+
+Recieve `.json` data
+
+```
+PUT - http://localhost:8080/depts 请求参数：{"id": 1, "name": "研发部"}
+```
+
+```java
+@PutMapping("/depts")
+public Result updateDept(@RequestBody Dept dept) {}
+```
+
+
+
+##### 分页逻辑
+
+后端 + 数据库
+
+* 数据量大，前端不能一次性加载所有数据
+* 获得最新数据
+* 安全性：前端不能看到全部数据
+* 性能：后端查询比前端处理更高效
+
+```sql
+# 开始索引 = (当前页码 - 1)  *  每页显示条数
+SELECT * FROM emp  LIMIT 0,10; -- get front-end data
+```
+
+```java
+// PageResult send .json back to front-end
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class PageResult {
+        private Long total; //总记录数
+        private List rows; //当前页数据列表
+}
+```
+
+
+
+##### Entity
+
+###### 实体类可以包含数据库没有的字段（很常见！）
+
+```java
+public class Emp {
+    private Integer id;
+    private Integer deptId;
+
+    // 扩展字段（数据库里没有）
+    private String deptName;
+}
+```
+
+* 扩展字段 / 非持久化字段（transient field）
+*  VO（View Object）字段
+*  仅用于返回给前端的展示字段
+
+> 这些字段：
+>
+> * 不会插入数据库
+> * 不会更新数据库
+> * 不会出现在 emp 表里
+> * 不会被 ORM 自动持久化
+
+###### 构造方法
+
+| 构造器类型       | 是否需要 | 用途                     |
+| ---------------- | -------- | ------------------------ |
+| **无参构造**     | ⭐ 必需   | ORM、JSON 解析           |
+| **全参构造**     | 可选     | 测试、DTO/VO 常用        |
+| **Builder 模式** | 强烈推荐 | 安全、可读性好、企业常用 |
+
+```java
+//@NoArgsConstructor
+Emp emp = new Emp();
+emp.setName("Franklin");
+emp.setDeptId(3);
+
+//with builder
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class Emp { ... }
+
+Emp emp = Emp.builder()
+             .name("Franklin")
+             .deptId(3)
+             .salary(10000)
+             .build();
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

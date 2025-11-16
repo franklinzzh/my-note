@@ -342,6 +342,10 @@ Host github-work
 # Go to local repo
 # the repo name is the same as github repo's name
 git remote -v # check for repo name
+
+# Add url if no remote
+git remote add origin git@github-personal:franklinzzh/web-ai-project.git
+# use set-url to change the link
 git remote set-url origin git@github-personal:franklinzzh/repo.git
 git remote set-url origin git@github-work:franklin-zzh/repo.git
 
@@ -424,6 +428,27 @@ sudo /usr/local/mysql/support-files/mysql.server start
 
 
 ### - Java & IntelliJ IDE
+
+##### IntelliJ Command
+
+| 模板      | 用途               |
+| --------- | ------------------ |
+| `sout`    | System.out.println |
+| `psvm`    | main 方法          |
+| `fori`    | for 循环           |
+| `iter`    | foreach            |
+| `ifn`     | if (var == null)   |
+| `NotNull` | @NotNull 注解      |
+
+配置企业级注释模版
+
+```
+open ~/Library/Application\ Support/JetBrains/IdeaIC2025.2/templates
+```
+
+
+
+##### Java Setup
 
 ```
 touch ~/.zshrc
