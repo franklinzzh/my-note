@@ -463,7 +463,7 @@ SELECT * FROM baiology.user WHERE user_name like '%bb%';
 
 
 
-##### **分组查询**
+##### Basic Query
 
 ```sql
 -- COUNT
@@ -504,8 +504,6 @@ select id, user_name from user order by create_time, user_type_id desc limit (i-
 * `AVG()` → 求平均
 * `MAX()` → 最大值
 * `MIN()` → 最小值
-
-
 
 
 
@@ -680,8 +678,6 @@ select * from emp as e join dept as d on e.dept_id = d.id where ((id, salary) = 
 
 
 
-
-
 ### - MyBatis
 
 simpilfied JDBC on Dao
@@ -728,6 +724,27 @@ SELECT * FROM user WHERE id = ?
 
 
 
+##### `Mapper.xml`
+
+> SQL语句过长，可以存放到 `resource` 下的Mapper中
+>
+> 注意：`copy reference`  后将 `com.franklin.mapper`  改为 `com/franklin/mapper`
+
+
+
+```xml
+<mapper namespace="com.franklin.mapper.EmpMapper">
+    <select id="getAll" resultType="com.franklin.entity.Emp">
+    </select>
+</mapper>
+```
+
+* `namespace` : Binds this XML to a specific Mapper interface.
+* `id` : The method name in the mapper interface.
+* `resultType` : The Java class used to map each row returned by a `SELECT` .
+
+
+
 
 
 
@@ -760,9 +777,25 @@ SELECT * FROM user WHERE id = ?
 
 
 
-##### `MyBatis` query
+### - Useful Java method:
 
 
+
+```
+if (!CollectionUtils.isEmpty(exprList)) {}
+//the same as
+if (collection != null && !collection.isEmpty()) {}
+```
+
+To avoid `NullPointerException` and `useless logics for empty list`
+
+
+
+### - `Mapper` interface
+
+NO `;` at the end of the query.
+
+##### Basic Query
 
 `SELECT`
 `INSERT INTO`
@@ -777,7 +810,105 @@ UPDATE dept SET column1 = '#{entityName1}', column2 = '#{entityName2}' WHERE id 
 
 
 
-### `Controller` API
+##### 模糊查询
+
+```sql
+e.name LIKE CONCAT('%', #{name}, '%') -- case insensitive
+```
+
+
+
+### - `mapper.xml`
+
+⚠️ It doesn't allow `""` inside `<mapper>`
+
+
+
+##### 动态SQL(if)
+
+`<if>`：判断条件是否成立，如果条件为true，则拼接SQL。
+
+`<where>`：根据查询条件，来生成where关键字，并会自动去除条件前面多余的and或or。
+
+```xml
+			<where>
+            <if test="name != null and name != ''">
+                AND e.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="gender != null">
+                AND e.gender = #{gender}
+            </if>
+            <if test="begin != null">
+                AND e.entry_date &gt;= #{begin}
+            </if>
+            <if test="end != null">
+                AND e.entry_date &lt;= #{end}
+            </if>
+        </where>
+```
+
+**好处**：当某些值前端未输入，默认为null，不需要单独为该条件写一条SQL语句；否则 k 个param要写2^k 个SQL
+
+
+
+`for each`
+
+Target: 
+
+```sql
+insert into emp_expr() values (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?), (?, ?, ?, ?)
+```
+
+xml Code
+
+```xml
+<foreach collection="exprList" item="expr" separator="," >
+  (#{expr.empId}, #{expr.company}, #{expr.startDate}, #{expr.endDate})
+</foreach>
+```
+
+> 1. collection：集合名称 --要和 mapper interface 中传入参数名称一致
+> 2. item：集合遍历出来的元素/项 --要和 #{expr. } 的 pojo 名称相同
+> 3. separator：每一次遍历使用的分隔符
+> 4. open：遍历开始前拼接的片段
+> 5. close：遍历结束后拼接的片段
+
+Think of it as :
+
+```java
+for (EmpExpr expr : exprList) {
+    ...
+}
+```
+
+
+
+
+
+##### Use auto increases key and add into pojo
+
+```xml
+<insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO emp (name, gender, dept_id, entry_date)
+    VALUES (#{name}, #{gender}, #{deptId}, #{entryDate});
+</insert>
+```
+
+> **useGeneratedKeys = true** → enable JDBC auto key retrieval
+>
+> **keyProperty = "id"** → write the generated key into `emp.id`
+
+##### - `SELECT` : 
+
+##### - `INSERT INTO`: 
+
+
+
+
+
+
+
+### - `Controller` API
 
 `GET` - get
 `POST` - add
@@ -794,7 +925,7 @@ UPDATE dept SET column1 = '#{entityName1}', column2 = '#{entityName2}' WHERE id 
 
 
 
-`@PathVariable`
+##### `@PathVariable`
 
 `http://localhost:8080/depts/1`
 
@@ -805,7 +936,7 @@ public Result getDept(@PathVariable Integer id) {}
 
 
 
-`@RequestBody`
+##### `@RequestBody`
 
 Recieve `.json` data
 
@@ -817,6 +948,46 @@ PUT - http://localhost:8080/depts 请求参数：{"id": 1, "name": "研发部"}
 @PutMapping("/depts")
 public Result updateDept(@RequestBody Dept dept) {}
 ```
+
+> @RequestBody注解的作用：将 HTTP请求体中的JSON或XML数据，自动绑定（反序列化）到后端的Java对象上
+
+
+
+##### `@Param`
+
+```java
+// for required param
+@RequestParam(defaultValue = "1")
+// for not required param
+@RequestParam(defaultValue = "") //works for String
+
+@RequestParam(required = false)
+```
+
+
+
+##### **Rules:**
+
+* `@RequestBody` can only have one in a method
+* With `@RequestParam` , order doesn't matter
+
+
+
+##### **Order:**
+
+> @PathVariable
+>
+> @RequestParam
+>
+> pagination vars (page, pageSize)
+>
+> @RequestBody (if any)
+>
+> HttpServletRequest / HttpServletResponse
+>
+> authentication principal (e.g. @AuthenticationPrincipal)
+
+
 
 
 
@@ -847,9 +1018,33 @@ public class PageResult {
 
 
 
-##### Entity
+##### EmpQueryParam
 
-###### 实体类可以包含数据库没有的字段（很常见！）
+It is used to handle the circum that there are many `params` in query
+
+```java
+@GetMapping
+    public Result getAll(@RequestParam(defaultValue = "") String name,
+                         @RequestParam(required = false) Integer gender,
+                         @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate begin,
+                         @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate end,
+                         @RequestParam(defaultValue = "1")  Integer page,
+                         @RequestParam(defaultValue = "10")  Integer pageSize) {}
+
+
+```
+
+
+
+
+
+### - Entity
+
+> All DTOs, VOs, Entities, Params are POJOs.
+
+Database tables (POJO mapped to DB)
+
+实体类可以包含数据库没有的字段（很常见！）
 
 ```java
 public class Emp {
@@ -872,7 +1067,9 @@ public class Emp {
 > * 不会出现在 emp 表里
 > * 不会被 ORM 自动持久化
 
-###### 构造方法
+
+
+##### 构造方法
 
 | 构造器类型       | 是否需要 | 用途                     |
 | ---------------- | -------- | ------------------------ |
@@ -902,11 +1099,24 @@ Emp emp = Emp.builder()
 
 
 
+### - DTO
 
+dto → Data Transfer Objects
 
+组合封装（Composition）；
 
+```java
+public class EmpDto {
+    private Long id;
+    private String name;
+    private Long deptId;
+    
+    //组合封装
+    List<WorkExperience> experiences;
+}
+```
 
-
+提升可维护性，扩展性
 
 
 
