@@ -775,6 +775,154 @@ SELECT * FROM user WHERE id = ?
 
 # - 实战开发
 
+### - Springboot 注解
+
+##### `@Target`
+
+这个注解可以放在哪些位置
+
+#####  `@Retention`
+
+注解在运行时是否可见
+
+* RUNTIME: JVM 运行期可读 → Spring 必须用
+
+##### `@Documented`
+
+生成 API 文档时显示注解
+
+
+
+##### `@PathVariable`
+
+`http://localhost:8080/depts/1`
+
+```java
+@GetMapping("/depts/{id}")
+public Result getDept(@PathVariable Integer id) {}
+```
+
+
+
+##### `@RequestBody`
+
+Recieve `.json` data
+
+```
+PUT - http://localhost:8080/depts 请求参数：{"id": 1, "name": "研发部"}
+```
+
+```java
+@PutMapping("/depts")
+public Result updateDept(@RequestBody Dept dept) {}
+```
+
+> @RequestBody注解的作用：将 HTTP请求体中的JSON或XML数据，自动绑定（反序列化）到后端的Java对象上
+
+
+
+##### `@RequestParam`
+
+```java
+// for required param
+@RequestParam(defaultValue = "1")
+// for not required param
+@RequestParam(defaultValue = "") //works for String
+
+@RequestParam(required = false)
+
+@RequestParam("file") MultipartFile image // want to connect different names
+```
+
+
+
+##### **Rules:**
+
+* `@RequestBody` can only have one in a method
+* With `@RequestParam` , order doesn't matter
+
+
+
+##### **Order:**
+
+> @PathVariable
+>
+> @RequestParam
+>
+> pagination vars (page, pageSize)
+>
+> @RequestBody (if any)
+>
+> HttpServletRequest / HttpServletResponse
+>
+> authentication principal (e.g. @AuthenticationPrincipal)
+
+
+
+##### `@Value` 
+
+当 `Component` 中存在一些 `member variable` ，可以声明`@Value` ，并在  `yml`  中进行配置
+
+```yml
+#阿里云OSS
+aliyun:
+  oss:
+    endpoint: https://oss-cn-beijing.aliyuncs.com
+    bucketName: java-ai
+    region: cn-beijin
+```
+
+
+
+```java
+		@Value("${aliyun.oss.endpoint}")
+    private String endpoint;
+    
+    @Value("${aliyun.oss.bucketName}")
+    private String bucketName;
+    
+    @Value("${aliyun.oss.region}")
+    private String region;
+```
+
+但如果注解变量过多，则可以利用Spring提供的简化版.
+
+
+
+##### `@ConfigurationProperties`
+
+* 需要创建一个实现类，且实体类中的属性名和配置文件当中key的名字必须要一致
+  * 比如：配置文件当中叫endpoint，实体类当中的属性也得叫endpoint，另外实体类当中的属性还需要提供 getter / setter方法
+* 需要将实体类交给Spring的IOC容器管理，成为IOC容器当中的bean对象
+* 在实体类上添加`@ConfigurationProperties`注解，并通过 `prefix` 属性来指定配置参数项的前缀
+
+```java
+@ConfigurationProperties(prefix = "aliyun.oss")
+public final class AliyunOSSProperties {
+    private final String instanceVariable;
+  	...
+
+    public AliyunOSSProperties(String instanceVariable, ...) {
+        this.instanceVariable = instanceVariable;
+      	...
+    }
+
+    public String getInstanceVariable() { return instanceVariable; }
+  	...
+}
+```
+
+Since this is a property class, all instance variables should be declared with `final`
+
+Don't use `@Data` , `@Component` , `@AllArgsConstructor` with `@ConfigurationPorperties`. Don't let beans to constrain properties, because it should be flexible. 
+Also, since using `final`   and `@ConfigurationProperties` , in `WebApplication` add `@ConfigurationPropertiesScan` to let it works. 
+
+## (Still need to figure out why? ......to be continued)
+
+---
+
+
+
 
 
 ### - Useful Java method:
@@ -798,14 +946,27 @@ NO `;` at the end of the query.
 ##### Basic Query
 
 `SELECT`
+
+```sql
+SELECT * FROM dept WHERE
+```
+
 `INSERT INTO`
+
+```sql
+INSERT INTO dept(column1, colume2) VALUES (#{entityName1}, #{entityName2})
+```
+
 `UPDATE`
+
+```sql
+UPDATE dept SET column1 = '#{entityName1}', column2 = '#{entityName2}' WHERE id = #{id}
+```
+
 `DELETE FROM` 
 
 ```sql
-INSERT INTO dept(column1, colume2) VALUES(#{entityName1}, #{entityName2})
-
-UPDATE dept SET column1 = '#{entityName1}', column2 = '#{entityName2}' WHERE id = #{id}
+DELETE FROM dept WHERE id IN (#{id1}, #{id1}, #{id1})
 ```
 
 
@@ -851,7 +1012,7 @@ e.name LIKE CONCAT('%', #{name}, '%') -- case insensitive
 
 
 
-`for each`
+##### `for each`
 
 Target: 
 
@@ -898,13 +1059,192 @@ for (EmpExpr expr : exprList) {
 >
 > **keyProperty = "id"** → write the generated key into `emp.id`
 
-##### - `SELECT` : 
-
-##### - `INSERT INTO`: 
 
 
 
 
+### - 事务（transaction）
+
+> 事务是一组操作的集合，会把所有操作当做一个整体 向系统提交或撤销请求，要么同时成功要么同时失败。
+
+具体流程：
+
+```SQL
+-- 开启事务
+start transaction; / begin;
+
+-- 1. 保存员工基本信息
+insert into emp values (39, 'Tom', '123456', '汤姆', 1, '13300001111', 1, 4000, '1.jpg', '2023-11-01', 1, now(), now());
+
+-- 2. 保存员工的工作经历信息
+insert into emp_expr(emp_id, begin, end, company, job) values (39,'2019-01-01', '2020-01-01', '百度', '开发'),                                                                                                       (39,'2020-01-10', '2022-02-01', '阿里', '架构');
+
+-- 提交事务(全部成功)
+commit;
+
+-- 回滚事务(有一个失败)
+rollback;
+```
+
+
+
+##### ACID四大特性
+
+* Atomicity ：事务中的所有操作要么全部成功，要么全部失败 -- 回滚
+* Consistency： 事务前后，数据库必须从一个合法状态到另一个合法状态。不能破坏约束（pk，fk）
+  * 如果事务成功的完成，那么数据库的所有变化将生效。
+  * 如果事务执行出现错误，那么数据库的所有变化将会被回滚(撤销)，返回到原始状态。
+* Isolation：多个用户并发的访问数据库时，一个用户的事务不能被其他用户的事务干扰，多个并发的事务之间要相互隔离。一个事务的成功或者失败对于其他的事务是没有影响。
+* Durability：一个事务一旦被提交或回滚，它对数据库的改变将是永久性的，哪怕数据库发生异常，重启之后数据亦然存在。
+
+
+
+##### `@Transactional` 
+
+**作用：**就是在当前这个方法执行开始之前来开启事务，方法执行完毕之后提交事务。如果在这个方法执行的过程当中出现了异常，就会进行事务的回滚操作。
+
+**位置：**业务层的方法上、类上、接口上
+
+* 方法上：当前方法交给spring进行事务管理
+* 类上：当前类中所有的方法都交由spring进行事务管理 
+* 接口上：接口下所有的实现类当中所有的方法都交给spring 进行事务管理
+
+> **默认情况下，只有出现RuntimeException(运行时异常)才会回滚事务。**其他Exception不会抛出异常
+
+```yml
+#spring事务管理日志
+logging: 
+  level: 
+    org.springframework.jdbc.support.JdbcTransactionManager: debug
+```
+
+
+
+###### - `rollbackfor `
+
+```
+Class<? extends Throwable>[] rollbackFor() default {};
+```
+
+继承 `Throwable` ，可指定任何 `Throwable` 子类
+
+`@Transactional(rollbackFor = Exception.class)` 
+
+
+
+###### - `propagation` 
+
+事务的**传播**行为: 当一个事务方法被另一个事务方法调用时，这个事务方法应该如何进行事务控制。
+
+```java
+REQUIRED(0), //默认值，有事务，新事务就加入；没有，则创建新的
+SUPPORTS(1),
+MANDATORY(2),
+REQUIRES_NEW(3),//无论是否有事务，都创建新的
+NOT_SUPPORTED(4),
+NEVER(5),
+NESTED(6);
+```
+
+`@Transactional(propagation = Propagation.REQUIRES_NEW)`
+
+
+
+适用情况：
+
+* **REQUIRED：**大部分情况下都是用该传播行为即可。
+* **REQUIRES_NEW：**当我们不希望事务之间相互影响时，可以使用该传播行为。比如：下订单前需要记录日志，不论订单保存成功与否，都需要保证日志记录能够记录成功。
+
+
+
+### - File Upload
+
+前端：
+
+Form表单：
+
+* 表单必须有file域，用于选择要上传的文件
+* 表单提交方式必须为POST：通常上传的文件会比较大，所以需要使用 POST 提交方式
+* 表单的编码类型enctype必须要设置为：multipart/form-data：普通默认的编码格式是不适合传输大型的二进制数据的，所以在文件上传时，表单的编码格式必须设置为multipart/form-data
+
+```html
+		<form action="/upload" method="post" enctype="multipart/form-data">
+        <label for="fileInput">Choose file:</label>
+        <input type="file" id="fileInput" name="file" />
+
+        <!-- 多文件上传用 multiple -->
+        <!-- <input type="file" id="fileInput" name="files" multiple /> -->
+
+        <br /><br />
+        <button type="submit">Upload</button>
+    </form>
+```
+
+后端：
+
+controller 
+
+```java
+public void upload(String username, Integer age, @RequestParam("file") MultipartFile file)
+```
+
+
+
+Always use `getParentFile()` when you want to save the file. To avoid
+
+```java
+File dir = new File("/upload/photo.jpg");
+dir.mkdirs();
+```
+
+  
+
+```java
+File targetFile = new File(uploadFolder, newFileName);
+
+// ensure folder exists
+File parent = targetFile.getParentFile();
+if (!parent.exists()) {
+    parent.mkdirs();
+}
+
+// save file
+file.transferTo(targetFile);
+```
+
+> **MultipartFile 常见方法：** 
+>
+> * `String  getOriginalFilename();`  //获取原始文件名
+> * `void  transferTo(File dest);`` `   //将接收的文件转存到磁盘文件中
+> * `long  getSize();`   //获取文件的大小，单位：字节
+> * `byte[]  getBytes();`` `   //获取文件内容的字节数组
+> * `InputStream  getInputStream();`    //获取接收到的文件内容的输入流
+
+
+
+配置 yml 文件大小限制
+
+```yaml
+spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+```
+
+
+
+### - 云服务
+
+> **云服务**指的就是通过互联网对外提供的各种各样的服务，比如像：语音服务、短信服务、邮件服务、视频直播服务、文字识别服务、对象存储服务等等。
+
+
+
+### - SDK
+
+> **SDK**：Software Development Kit 的缩写，软件开发工具包，包括辅助软件开发的依赖（jar包）、代码示例等，都可以叫做SDK。
+>
+> 简单说，sdk中包含了我们使用第三方云服务时所需要的依赖，以及一些示例代码。我们可以参照sdk所提供的示例代码就可以完成入门程序。
 
 
 
@@ -925,67 +1265,7 @@ for (EmpExpr expr : exprList) {
 
 
 
-##### `@PathVariable`
 
-`http://localhost:8080/depts/1`
-
-```java
-@GetMapping("/depts/{id}")
-public Result getDept(@PathVariable Integer id) {}
-```
-
-
-
-##### `@RequestBody`
-
-Recieve `.json` data
-
-```
-PUT - http://localhost:8080/depts 请求参数：{"id": 1, "name": "研发部"}
-```
-
-```java
-@PutMapping("/depts")
-public Result updateDept(@RequestBody Dept dept) {}
-```
-
-> @RequestBody注解的作用：将 HTTP请求体中的JSON或XML数据，自动绑定（反序列化）到后端的Java对象上
-
-
-
-##### `@Param`
-
-```java
-// for required param
-@RequestParam(defaultValue = "1")
-// for not required param
-@RequestParam(defaultValue = "") //works for String
-
-@RequestParam(required = false)
-```
-
-
-
-##### **Rules:**
-
-* `@RequestBody` can only have one in a method
-* With `@RequestParam` , order doesn't matter
-
-
-
-##### **Order:**
-
-> @PathVariable
->
-> @RequestParam
->
-> pagination vars (page, pageSize)
->
-> @RequestBody (if any)
->
-> HttpServletRequest / HttpServletResponse
->
-> authentication principal (e.g. @AuthenticationPrincipal)
 
 
 
