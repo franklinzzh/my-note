@@ -1055,7 +1055,7 @@ Also, since using `final`   and `@ConfigurationProperties` , in `WebApplication`
 
 
 
-##### `@Data`
+##### `@Data` vs `@Component`
 
 
 
@@ -1975,23 +1975,29 @@ assertThrows(IllegalArgumentException.class, () -> calculator.divide(10, 0));
 
 ### - Login
 
-Must use **POST** instead of GET
 
-* Most of the time, GET's json body will be ignored. Using url path more often.
-* GET should never update data, based on RESTful rules. It is created with function of just get the data.
-* For security reason, never use GET for Login. If putting password into url, website may cached these info.
 
-Why return "username or password is wrong" instead of telling user which part is wrong.
+##### Jwt Token Verify
 
-> Short answer: This prevents enumerated attacks. If telling user which part is wrong, it gives attackers info for username or password.
+To make sure Front-end call api with valid authorization, the user must maintain a valid login status. Since Http is a stateless proxy that every request is independent from each other. So when using apis, the web does not know whether this user has logged in or not. Jwt token gives a way to store the login status.
 
- 
+Tech:
 
-1. Login Controller-to-Service
-2. 登陆校验：
-   * 会话技术：用户登录成功之后，在后续的每一次请求中，都可以获取到该标记。
-     * Cookie/Session/JWT
-   * 统一拦截技术：过滤器Filter、拦截器Interceptor
+* Session Management: 会话技术
+
+  > is the technology used to let the server remember the same user across multiple HTTP requests, despite HTTP being stateless.
+  >
+  > no need for a persistent connection
+
+  * Session tracking: 
+    * It solved the prob of Http **stateless**, allows sharing data between requests
+    * Help server distinguish if the requests come from same web
+
+* Global Filter / Interceptor: 统一拦截技术
+
+
+
+##### Session Management
 
 > **Cookie** 
 >
@@ -2024,16 +2030,80 @@ Why return "username or password is wrong" instead of telling user which part is
 > JSON Web Token: 
 >
 > * Header: 记录令牌类型、签名算法等
-> * Payload: 自定义信息
+> * Payload: 自定义信息（不能包含敏感信息）
 > * Signature: 防止Token被篡改
 >
 > `Pros`:
 >
+> * 可在token中共享信息
 > * 支持PC端、移动端
 > * 解决集群环境下的认证问题
 > * 减轻服务器的存储压力（无需在服务器端存储）
 >
-> `Cons`: 需要自己实现（包括令牌的生成、令牌的传递、令牌的校验）
+> `Cons`: 
+>
+> * 需要自己实现（包括令牌的生成、令牌的传递、令牌的校验）
+> * 退出登陆，token可能仍然生效
+
+
+
+##### Global Filter
+
+JavaWeb三大组件(Servlet、Filter、Listener)之一
+
+```java
+@WebFilter(urlPatterns = "/*") //配置过滤器要拦截的请求路径（ /* 表示拦截浏览器的所有请求 ）
+public class DemoFilter implements Filter {}
+
+@ServletComponentScan //开启对Servlet组件的支持
+@SpringBootApplication
+public class WebAiApplication {}
+```
+
+
+
+##### Global Interceptor
+
+拦截器是Spring框架中提供的，用来动态拦截控制器方法的执行
+
+
+
+
+
+
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251202124947982.png" alt="image-20251202124947982" style="zoom:20%;" />
+
+> Tomcat并不识别所编写的Controller程序，但是它识别Servlet程序，所以在Spring的Web环境中提供了一个非常核心的Servlet：DispatcherServlet（前端控制器），所有请求都会先进行到DispatcherServlet，再将请求转给Controller。
+
+
+
+##### 两者对比
+
+| 特性               | Filter                            | Interceptor                  |
+| ------------------ | --------------------------------- | ---------------------------- |
+| 所属               | Servlet 规范                      | Spring MVC                   |
+| 执行位置           | Tomcat 容器层                     | DispatcherServlet 前后       |
+| 拦截范围           | **所有请求（静态 + 动态）**       | **只有 Spring MVC 请求**     |
+| 是否拦静态资源     | ✔ 会拦截                          | ✘ 不会拦截                   |
+| 是否有 Spring Bean | ✘ 不能 @Autowired（除非特殊处理） | ✔ 可以用 Spring 的 IOC       |
+| 典型用途           | 登录过滤、编码处理、XSS过滤       | 登录校验、权限校验、业务拦截 |
+
+
+
+##### Tips
+
+Must use **POST** instead of GET
+
+* Most of the time, GET's json body will be ignored. Using url path more often.
+* GET should never update data, based on RESTful rules. It is created with function of just get the data.
+* For security reason, never use GET for Login. If putting password into url, website may cached these info.
+
+Why return "username or password is wrong" instead of telling user which part is wrong.
+
+> Short answer: This prevents enumerated attacks. If telling user which part is wrong, it gives attackers info for username or password.
+
+
 
 
 
@@ -2149,20 +2219,196 @@ Spring AOP：
 常见形式：
 
 * execution(……)：根据方法的签名来匹配
-* @annotation(……) ：根据注解匹配
 
-```Java
+```java
 //？可省略
 execution(访问修饰符?  返回值  包名.类名.?方法名(方法参数) throws 异常?)
 ```
 
 
 
-* 
+* @annotation(……) ：根据注解匹配
+
+> 自定义注解
+
+```java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface LogOperation{
+}
+```
+
+> Controller
+
+```java
+		@Override
+    @LogOperation //自定义注解（表示：当前方法属于目标方法）
+    public void delete(Integer id) {
+        //1. 删除部门
+        deptMapper.delete(id);
+    }
+```
+
+> 切面类
+
+```java
+@Slf4j
+@Component
+@Aspect
+public class MyAspect6 {
+    //针对list方法、delete方法进行前置通知和后置通知
+
+    //前置通知
+    @Before("@annotation(com.itheima.anno.LogOperation)")
+    public void before(){
+        log.info("MyAspect6 -> before ...");
+    }
+    
+    //后置通知
+    @After("@annotation(com.itheima.anno.LogOperation)")
+    public void after(){
+        log.info("MyAspect6 -> after ...");
+    }
+}
+```
 
 
 
+##### 实操
 
+> Design an Audit Log system save create, update, delete log info into database.
+>
+> Requirements: 操作人、操作时间、执行方法的全类名、执行方法名、方法运行时参数、返回值、方法执行时长
+>
+> Which advice type? 	`@Around` . 
+>
+> Why not `@Before + @After` ? 
+>
+> *  `@After` cannot obtain return value. 
+> * Hard to capture exceptions. 
+> * Log becomes spilt and duplicated.
+
+###### - 1. Aspect
+
+```java
+@Aspect
+@Component
+public class OperationLogAspect {
+
+    @Autowired
+    private OperateLogMapper operateLogMapper;
+
+    // 环绕通知
+    @Around("@annotation(log)")
+    public Object around(ProceedingJoinPoint joinPoint, LogOperation log) throws Throwable {
+        // 记录开始时间
+        long startTime = System.currentTimeMillis();
+
+        Object result = null;
+        Exception exception = null;
+
+        try {
+            result = joinPoint.proceed();    // If throws, jumps to catch
+            return result;
+        } catch (Exception ex) {
+            exception = ex;                  // Record exception
+            throw ex;                        // Re-throw so controller handles it
+        } finally {
+            // 当前时间
+            long endTime = System.currentTimeMillis();
+            // 耗时
+            long costTime = endTime - startTime;
+
+            // 构建日志对象
+            OperateLog operateLog = new OperateLog();
+          
+          	// set variables
+            operateLog.setOperateEmpId(getCurrentUserId()); //需要实现 getCurrentUserId 方法
+            if (exception != null) {
+                operateLog.setException(
+                    exception.getClass().getSimpleName() + ": " + exception.getMessage()
+                );
+            }
+            operateLog.setCostTime(costTime);
+
+            // 插入日志
+            logService.writeLogAsync(operateLog);
+        }
+    }
+    
+    // 示例方法，获取当前用户ID
+    private int getCurrentUserId() {
+        // 这里应该根据实际情况从认证信息中获取当前登录用户的ID
+      	// 因为增删改都可以从token中获取当前用户操作ID，所以可以直接从ThreadLocal中调用
+        return 1; // 示例返回值
+    }
+}
+```
+
+
+
+###### - 2. ThreadLocal
+
+> It is a local variable of Thread
+>
+> ThreadLocal为每个线程提供一份单独的存储空间，具有线程隔离的效果，不同的线程之间不会相互干扰。
+>
+> Every request leads to a thread
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251202172801854.png" alt="image-20251202172801854" style="zoom:20%;" />
+
+```java
+public class CurrentHolder {
+    private static final ThreadLocal<Integer> CURRENT_LOCAL = new ThreadLocal<>();
+    
+    public static void setCurrentId(Integer employeeId) {
+        CURRENT_LOCAL.set(employeeId);
+    }
+    
+    public static Integer getCurrentId (){
+        return CURRENT_LOCAL.get();
+    }
+		//清理ThreadLocal数据
+    public static void remove() {
+        CURRENT_LOCAL.remove();
+    }
+}
+```
+
+1)  Set ID inside preHolder in the interceptor
+2) Remove data in ThreadLocal when this method is complete
+
+> prevent data leak; since the Thread is reusable.
+
+```java
+		// Don't remove in postHolder; even a method has finished, it may throw an exception.
+		@Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+        System.out.println("afterCompletion .... ");
+        CurrentHolder.remove();
+    }
+```
+
+Add getID in `OperationLogAspect.java`
+
+```java
+		private int getCurrentUserId() {
+        return CurrentHolder.getCurrentId();
+    }
+```
+
+###### - 3. ThreadLocal in Filter
+
+To set data in ThreadLocal and remove data, Filter is a better choice:
+
+* Best place to clear ThreadLocal, since it is the last step to leave Java Sevlet
+
+Better process:
+
+* Parse Jwt token in Filter and put userId in ThreadLocal
+* Validate userId in Interceptor
+* AOP get userId and save to Audit Log
+* Clear data from ThreadLocal in `finally` in Filter
 
 
 
@@ -2284,3 +2530,14 @@ useGeneratedKeys是通过获得接收mysql 返回的自增数值，更新到最�
 useGeneratedKeys只适用于auto increment columns。
 
 注意，MySQL的insert/update/delete 方法 return how many rows are affected.
+
+
+
+
+
+Start with a leading `/`
+
+```
+action="/api/upload/avatar"
+```
+
