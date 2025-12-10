@@ -38,7 +38,7 @@
 
 ### - Terminal Command
 
-```
+```bash
 # show all files
 ls   # On macOS/Linux
 sudo mkdir 
@@ -48,6 +48,15 @@ cat /file
 sudo nano /file
 
 tar -xzf + `file-name`.tar.gz // extract a .tar.gz file
+
+#show command history
+history
+
+whoami
+
+echo $0
+
+
 ```
 
 
@@ -65,6 +74,81 @@ source ~/.zshrc // let update works
 mvn -v // tes 
 java -v
 ```
+
+
+
+### - Docker Command
+
+| **命令**       | **说明**                       | **文档地址**                                                 |
+| :------------- | :----------------------------- | :----------------------------------------------------------- |
+| docker pull    | 拉取镜像                       | [docker pull](https://docs.docker.com/engine/reference/commandline/pull/) |
+| docker push    | 推送镜像到DockerRegistry       | [docker push](https://docs.docker.com/engine/reference/commandline/push/) |
+| docker images  | 查看本地镜像                   | [docker images](https://docs.docker.com/engine/reference/commandline/images/) |
+| docker rmi     | 删除本地镜像                   | [docker rmi](https://docs.docker.com/engine/reference/commandline/rmi/) |
+| docker run     | 创建并运行容器（不能重复创建） | [docker run](https://docs.docker.com/engine/reference/commandline/run/) |
+| docker stop    | 停止指定容器                   | [docker stop](https://docs.docker.com/engine/reference/commandline/stop/) |
+| docker start   | 启动指定容器                   | [docker start](https://docs.docker.com/engine/reference/commandline/start/) |
+| docker restart | 重新启动容器                   | [docker restart](https://docs.docker.com/engine/reference/commandline/restart/) |
+| docker rm      | 删除指定容器                   | [docs.docker.com](https://docs.docker.com/engine/reference/commandline/rm/) |
+| docker ps      | 查看容器                       | [docker ps](https://docs.docker.com/engine/reference/commandline/ps/) |
+| docker logs    | 查看容器运行日志               | [docker logs](https://docs.docker.com/engine/reference/commandline/logs/) |
+| docker exec    | 进入容器                       | [docker exec](https://docs.docker.com/engine/reference/commandline/exec/) |
+| docker save    | 保存镜像到本地压缩文件         | [docker save](https://docs.docker.com/engine/reference/commandline/save/) |
+| docker load    | 加载本地压缩文件到镜像         | [docker load](https://docs.docker.com/engine/reference/commandline/load/) |
+| docker inspect | 查看容器详细信息               | [docker inspect](https://docs.docker.com/engine/reference/commandline/inspect/) |
+
+
+
+示例：
+
+> 安装MySQL 8.0
+
+```bash
+docker pull mysql:8.0
+
+#set up MySQL container
+docker run -d \
+  --name mysql8 \
+  -p 3307:3306 \
+  -e MYSQL_ROOT_PASSWORD=password \
+  -e TZ=Asia/Shanghai \
+  mysql:8.0
+docker ps
+
+# connect to MySQL
+docker exec -it mysql8 mysql -u root -p
+# OR
+mysql -h 127.0.0.1 -P 3307 -u root -p
+
+# Then, update application.yml on db url
+```
+
+
+
+##### 自定义镜像
+
+
+
+**DockerFile**
+
+> A Dockerfile is a script that tells Docker how to build a container image.
+
+**Command**
+
+| **指令**       | **说明**                                     | **示例**                     |
+| :------------- | :------------------------------------------- | :--------------------------- |
+| **FROM**       | 指定基础镜像                                 | `FROM centos:7`              |
+| **ENV**        | 设置环境变量，可在后面指令使用               | `ENV key value`              |
+| **COPY**       | 拷贝本地文件到镜像的指定目录                 | `COPY ./xx.jar /tmp/app.jar` |
+| **RUN**        | 执行Linux的shell命令，一般是安装过程的命令   | `RUN yum install gcc`        |
+| **EXPOSE**     | 指定容器运行时监听的端口，是给镜像使用者看的 | EXPOSE 8080                  |
+| **ENTRYPOINT** | 镜像中应用的启动命令，容器运行时调用         | ENTRYPOINT java -jar xx.jar  |
+
+
+
+
+
+
 
 
 
@@ -167,20 +251,46 @@ git log --oneline -5 // show last 5 commit log
   ssh -T git@github.com
   ```
 
-
 ##### File synchronism:
+
+Clone from an existing project
+
+```bash
+git clone https://franklinzzh@github.com/franklinzzh/web-ai.git
+git clone https://github.com/franklinzzh/web-ai.git
+```
 
 In Github repository, clone with ` HTTPS` or `SSH`
 
 ```bash
 git init
-git remote add origin https://github.com/franklin-zzh/my_web.git //https 添加远程连接地址
-git remote set-url origin git@github.com:franklin-zzh/my_web.git //ssh
+git remote add origin https://github.com/franklin-zzh/my_web.git
+git remote set-url origin git@github.com:franklin-zzh/my_web.git
+git remote set-url origin https://franklinzzh@github.com/franklin-zzh/my_web.git
+# for personal
+vim ~/.ssh/config
+vim ~/.ssh/id_personal.pub
+git remote set-url origin git@github-personal:franklin-zzh/my_web.git 
+
 git pull origin main
 git add . //add后面跟"."表明添加所有文件，如果只需要添加个别文件直接后面跟文件名，也可后面跟多个文件名
 git commit -m "first submit" //注释说明，每次提交新文件或更改的文件都需要添加注释
 git push -u origin main //将add的文件push到github仓库中去     --force
 ```
+
+
+
+##### RM cache
+
+> Can be used to remove remote repo, by delete local cache.
+
+```bash
+git rm --cached Dockerfile 
+# remove a file package
+git rm -r --cached app-backend
+```
+
+
 
 ##### Check top-level 	
 

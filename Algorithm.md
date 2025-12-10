@@ -281,9 +281,20 @@ class Solution {
 > * 输出： [4,7,2,6,9,1,3]
 > * 预期结果： [4,7,2,9,6,3,1]
 
+#### - 分治
+
+Divide and conquer
+
+#### - 遍历
+
+traverse
+
+* 回溯（backtrack）
+* DFS
 
 
-#### -回溯算法
+
+#### - 回溯
 
 ```java
 // 回溯算法框架
@@ -308,8 +319,51 @@ void backtrack(...) {
 
 #### -回溯/DFS/动态规划 区别联系
 
+##### 回溯/DFS
+
+回溯/DFS是针对递归不同需要，在for loop内/外 「做选择」，进行的递归算法，本质一样。
+
+`backtrack` / `dfs` / `travese` 均不需要返回值 
+
+* 遍历思维 -- 无返回值
+* 分解问题 -- 有返回值
+
+##### base case && 剪枝
+
+ ... 待补充
+
+```java
+void backtrack(...) {
+    // base case
+    if (reached the leaf node) {
+        // 到达叶子节点，结束递归
+        return;
+    }
+
+    for (int i = 0, i < n; i++) {
+        // 剪枝逻辑
+        if (...) {
+            // 第 i 个选择不满足条件则跳过
+            continue;
+        }
+
+        // 做选择
+        ...
+
+        backtrack(...)
+
+        // 撤销选择
+        ...
+    }
+}
+```
+
+
+
+##### 回溯/DFS vs DP
+
 - 动态规划算法属于分解问题（分治）的思路，它的关注点在整棵「子树」。
-- 回溯算法属于遍历的思路，它的关注点在节点间的「树枝」。
+- 回溯算法属于遍历的思路，它的关注点在节点间的「树枝」。[[LC46-全排列](https://leetcode.cn/problems/permutations/)]
 - DFS 算法属于遍历的思路，它的关注点在单个「节点」。
 
 ```java

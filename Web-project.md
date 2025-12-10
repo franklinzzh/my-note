@@ -2399,9 +2399,19 @@ Add getID in `OperationLogAspect.java`
 
 ###### - 3. ThreadLocal in Filter
 
-To set data in ThreadLocal and remove data, Filter is a better choice:
+A **Filter** intercepts requests **before they reach a servlet/controller** and can also process responses **after the servlet executes**.
 
-* Best place to clear ThreadLocal, since it is the last step to leave Java Sevlet
+```java
+// Filter
+    try {
+            chain.doFilter(request , response);
+        } finally {
+            // clear ThreadLocal data
+            System.out.println("Current holder data: " + CurrentHolder.getCurrentId());
+            CurrentHolder.remove();
+            System.out.println("Current Holder stored data has been removed.");
+        }
+```
 
 Better process:
 
@@ -2540,4 +2550,50 @@ Start with a leading `/`
 ```
 action="/api/upload/avatar"
 ```
+
+
+
+
+
+### - 项目部署
+
+##### **Linux系统**
+
+安装方式：物理/虚拟机部署
+
+**虚拟机**（Virtual Machine）指通过软件模拟的具有完整硬件系统功能、运行在完全隔离环境中的完整计算机系统。常用虚拟机软件
+
+
+
+**Linux Distribution** 
+
+Created based on Linux
+
+Distros:
+
+* Ubuntu
+* Debian
+* Alphine
+
+
+
+### Docker
+
+
+
+##### Docker compose
+
+How to rewrite current compose with `secrets` ...
+
+How to set restart at the compose, rather than set it in the terminal
+
+##### Dynamic vs Static
+
+Is static page mobile user friendly?
+
+Is it possible to develop based on both? 
+
+
+
+##### Single page vs Multi page
 
