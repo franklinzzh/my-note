@@ -1,6 +1,26 @@
-## Command 
+# Command 
 
-### - Mac Command
+
+
+## Typera
+
+| **Function**   | **Hotkey (macOS)**   |
+| -------------- | -------------------- |
+| Table          | Command + Option + T |
+| Code Fence     | Command + Option + C |
+| Math Block     | Command + Option + B |
+| Quote          | Command + Option + Q |
+| Unordered List | Command + Option + U |
+| Ordered List   | Command + Option + O |
+| HyperText      | Command + K          |
+
+[Short-Cut Keys](https://support.typora.io/Shortcut-Keys/#change-shortcut-keys)
+
+
+
+## Mac
+
+### - Basic
 
 | **Function**               | **Hotkey (macOS)**                                         |
 | -------------------------- | ---------------------------------------------------------- |
@@ -20,29 +40,15 @@
 
 
 
-### - Typera Command
+## Terminal
 
-| **Function**   | **Hotkey (macOS)**   |
-| -------------- | -------------------- |
-| Table          | Command + Option + T |
-| Code Fence     | Command + Option + C |
-| Math Block     | Command + Option + B |
-| Quote          | Command + Option + Q |
-| Unordered List | Command + Option + U |
-| Ordered List   | Command + Option + O |
-| HyperText      | Command + K          |
-
-[Short-Cut Keys](https://support.typora.io/Shortcut-Keys/#change-shortcut-keys)
-
-
-
-### - Terminal Command
+### - Basic
 
 ```bash
 # show all files
 ls   # On macOS/Linux
 sudo mkdir 
-sudo mv
+sudo mv ./curr/path ./target/path
 
 cat /file
 sudo nano /file
@@ -55,8 +61,6 @@ history
 whoami
 
 echo $0
-
-
 ```
 
 
@@ -77,7 +81,30 @@ java -v
 
 
 
-### - Docker Command
+### - tar
+
+```bash
+-c #-create
+-x #-extract
+-v #-output process
+-f #-specify file name
+-z #-for gz -gzip tar
+
+# create tar for folder
+tar -cvf archive.tar folder/
+
+# extract tar
+tar -xf archive.tar
+
+# extract gzip tar to target path
+tar -xvf archive.tar.gz -C /target/path
+```
+
+
+
+
+
+## Docker
 
 | **命令**       | **说明**                       | **文档地址**                                                 |
 | :------------- | :----------------------------- | :----------------------------------------------------------- |
@@ -146,13 +173,11 @@ mysql -h 127.0.0.1 -P 3307 -u root -p
 
 
 
+* [See more](https://github.com/franklinzzh/my-note/blob/main/DevOps.md) commands
 
 
 
-
-
-
-### - Github
+## Github
 
 ##### Github无法访问
 
@@ -192,7 +217,7 @@ git remote -v
 
 
 
-### - Git command
+### - Git
 
 ##### Git Setup
 
@@ -467,7 +492,7 @@ git config user.email "personal@example.com"
 
 
 
-
+## Project
 
 ### - MySQL
 

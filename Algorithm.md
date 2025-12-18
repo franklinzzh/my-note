@@ -281,6 +281,69 @@ class Solution {
 > * 输出： [4,7,2,6,9,1,3]
 > * 预期结果： [4,7,2,9,6,3,1]
 
+
+
+##### 序列化和反序列化
+
+> **当二叉树中节点的值不存在重复时**：
+>
+> 1. 如果你的序列化结果中**不包含空指针的信息**，且你只给出**一种**遍历顺序，那么你无法还原出唯一的一棵二叉树。
+>
+> 2. 如果你的序列化结果中**不包含空指针的信息**，且你会给出**两种**遍历顺序，分两种情况：
+>
+>    （详情见二叉树构建 -- preorder/inorder/postorder）
+>
+>    * 如果你给出的是前序和中序，或者后序和中序，那么你可以还原出唯一的一棵二叉树。
+>
+>    * 如果你给出前序和后序，那么你无法还原出唯一的一棵二叉树。
+>
+> 3. 如果你的序列化结果中**包含空指针的信息**，且你只给出**一种**遍历顺序，也要分两种情况：
+>
+>    * 如果你给出的是前序或者后序，那么你可以还原出唯一的一棵二叉树。
+>
+>    * 如果你给出的是中序，那么你无法还原出唯一的一棵二叉树。
+
+
+
+##### Lowest Common Ancestor
+
+-LC236
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251215105034338.png" alt="image-20251215105034338" style="zoom:50%;" />
+
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251215105049624.png" alt="image-20251215105049624" style="zoom:50%;" />
+
+Only two possible cases.
+
+* Case 1: Two nodes on differet left, right trees
+* Case 2: Two nodes on the same subtree, with one node is a child of another.
+
+The base case is, always return the node when finding the match one.
+
+```java
+if (root.val == p.val || root.val == q.val) return root;
+```
+
+Then in post-order place, handling the logic whether return `root`  , or `left/right node` returned from recursive calls.
+
+```java
+// for case 1
+if (left != null && right != null) return root;
+
+// for case 2
+return left != null ? left : right;
+```
+
+Why this base case works for case 2?
+
+> Since it is placed in the pre-order place, it always reach the `root` first. 
+>
+> Also, `p` and `q` always exist in the tree. 
+
+
+
+
+
 #### - 分治
 
 Divide and conquer

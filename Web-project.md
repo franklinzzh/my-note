@@ -758,6 +758,8 @@ simpilfied JDBC on Dao
 > * `@Mapper` 接口自动解析，封装对象
 > * `spring.datasource` 从数据库连接池获取链接，用完放回，可复用
 
+
+
 ##### 数据库连接池
 
 > * 是一个容器，负责分配、管理数据库连接
@@ -2003,7 +2005,7 @@ Tech:
 >
 > `cons`:
 >
-> * 移动端APP(Android、IOS)中无法使用Cookie
+> * **移动端**APP(Android、IOS)中**无法使用Cookie**
 > * 不安全，用户可以自己禁用Cookie
 > * Cookie不能跨域: 
 >   * 协议 http/https
@@ -2036,9 +2038,9 @@ Tech:
 > `Pros`:
 >
 > * 可在token中共享信息
-> * 支持PC端、移动端
-> * 解决集群环境下的认证问题
-> * 减轻服务器的存储压力（无需在服务器端存储）
+> * 支持PC端、**移动端**
+> * 解决**集群**环境下的认证问题
+> * **减轻**服务器的**存储压力**（无需在服务器端存储）
 >
 > `Cons`: 
 >
@@ -2066,13 +2068,7 @@ public class WebAiApplication {}
 
 拦截器是Spring框架中提供的，用来动态拦截控制器方法的执行
 
-
-
-
-
-
-
-<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251202124947982.png" alt="image-20251202124947982" style="zoom:20%;" />
+<img src="/Users/franklin/Desktop/NO_Drive/Code/myWeb/Note/Screenshot/image-20251202124947982.png" alt="image-20251202124947982" style="zoom:50%;" />
 
 > Tomcat并不识别所编写的Controller程序，但是它识别Servlet程序，所以在Spring的Web环境中提供了一个非常核心的Servlet：DispatcherServlet（前端控制器），所有请求都会先进行到DispatcherServlet，再将请求转给Controller。
 
@@ -2597,3 +2593,18 @@ Is it possible to develop based on both?
 
 ##### Single page vs Multi page
 
+
+
+##### Cloud database
+
+```yaml
+spring:
+	datasource:
+		url: jdbc:mysql://<CLOUD_SQL_IP>:3306/<DB_NAME>?useSSL=true&serverTimezone=Asia/Shanghai
+
+spring:
+	datasource:
+		url: jdbc:mysql://<CLOUD_SQL_IP>:3306/<DB_NAME>?useSSL=true&serverTimezone=Asia/Shanghai
+```
+
+-

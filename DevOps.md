@@ -12,7 +12,12 @@
 
 ### Docker
 
-
+> 待办：
+>
+> * 多阶段构建（multi-stage build）
+> * .dockerignore
+> * 非 root 用户运行
+> * 基本镜像选择（alpine vs slim）
 
 ##### CMD
 
@@ -127,7 +132,7 @@ docker update --restart=unless-stopped myapp
 docker update --restart=always myapp
 
 # check auto-start status
-docker inspect web_ai-backend-1 --format '{{.HostConfig.RestartPolicy.Name}}'
+docker inspect web_ai-frontend-1 --format '{{.HostConfig.RestartPolicy.Name}}'
 docker inspect <container> --format '{{.HostConfig.RestartPolicy.Name}}'
 
 docker ps
@@ -139,7 +144,7 @@ docker ps
 
 ```bash
 # create a container
-docker run -it --name ubuntu22 ubuntu:22.04
+docker run -p 80:80 -it --name ubuntu22 ubuntu:22.04
 
 # reuse
 docker start ubuntu22
@@ -280,7 +285,7 @@ set up dockerfile
 
 build
 
-```
+```bash
 docker build -t app:1.0 .
 ```
 
@@ -383,6 +388,22 @@ volumes:
 
 `Nginx.conf`
 
+> `npm build` will not compile config, so `vite.conf.js` code will not be included in dist to use in docker or deploy remotely.
+
+```js
+server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
+    }
+  }
+```
+
+> So it needs nginx to forward client requests to another server, the **reverse proxy**.
+
 ```bash
 # remember to change localhost to container-name
 location /api/ {
@@ -390,3 +411,304 @@ location /api/ {
 }
 ```
 
+
+
+
+
+##### Upload image to repo
+
+```bash
+# create image based on dockerfile
+docker build -f deploy/docker/Dockerfile.frontend .
+# add name and tag
+docker build -t web-frondend:0.0.1 -f deploy/docker/Dockerfile.frontend .
+
+docker tag <image ID> frankzzh/web-frondend:0.0.1
+docker push frankzzh/web-frontend:0.0.1
+```
+
+
+
+### GCP
+
+##### cloud deploy
+
+###### - docker build
+
+```bash
+# frontend
+# mac m4 arm64/linux
+docker build \
+  --platform=linux/arm64 \
+  -t web-frontend:0.0.3 \
+  -f deploy/docker/Dockerfile.frontend .
+  
+docker run -d -p 91:8080 --name front web-frontend:0.0.3
+
+# GCP only allows amd64/linux
+docker build \
+  --platform=linux/amd64 \
+  -t web-frontend:0.0.1 \
+  -f deploy/docker/Dockerfile.frontend .
+```
+
+```bash
+# backend
+docker build \
+  --platform=linux/arm64 \
+  -t web-backend:0.0.1 \
+  -f deploy/docker/Dockerfile.backend .
+  
+docker run -d -p 8081:8080 --name back web-backend:0.0.1
+
+# GCP
+docker build \
+  --platform=linux/amd64 \
+  -t web-backend:0.0.1 \
+  -f deploy/docker/Dockerfile.backend .
+  
+docker run -d -p 8082:8080 -name back web-backend:0.0.1
+```
+
+
+
+###### - gcloud create and run
+
+```bash
+gcloud artifacts repositories create web-app-1-repo \
+    --repository-format=docker \
+    --location=asia-east1
+    
+gcloud projects create franklin-product-web-app-1 \
+    --name="Web App 1"
+    
+gcloud config set project <YOUR_PROJECT_ID>
+
+gcloud services enable artifactregistry.googleapis.com
+
+# GCP cloud run
+
+# 1.tag with gcloud
+docker tag image:<version> asia-docker.pkg.dev/<PROJECT_ID>/<myapp-repo>/image:latest
+
+# example
+docker tag web-frontend:0.0.1 asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-frontend:0.0.1
+docker tag web-backend:0.0.1 asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-backend:0.0.1
+
+gcloud auth configure-docker asia-east1-docker.pkg.dev
+
+# 2.push to docker hub
+docker push asia-east1-docker.pkg.dev/<PROJECT_ID>/<myapp-repo>/frontend:latest
+
+docker push asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-frontend:0.0.1
+docker push asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-backend:0.0.1
+
+gcloud services enable run.googleapis.com
+
+# 3.deploy with cloud run using docker hub image
+# frontend
+gcloud run deploy frontend-service \
+    --image asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-frontend:0.0.1 \
+    --platform managed \
+    --region asia-east1 \
+    --allow-unauthenticated
+    
+# backend
+gcloud run deploy backend-service \
+    --image asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-backend:0.0.1 \
+    --platform managed \
+    --region asia-east1 \
+    --allow-unauthenticated \
+    --add-cloudsql-instances franklin-product-web-app-1:asia-east1:mysql8-web-database
+```
+
+> Gcloud run has limitation on port choice for container: it auto choose port 8080 and cannot change it.
+>
+> Since using `--platform managed` for the run command, the port is set to 8080.
+>
+> If you want to change to self-customed port, use other ways like GK
+
+gcloud run deploy web-frontend \
+    --image asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-frontend:0.0.2 \
+    --platform managed \
+    --region asia-east1 \
+    --allow-unauthenticated
+
+```bash
+gcloud artifacts docker images delete \
+  asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-frontend:0.0.1
+
+# delete all images and tags
+gcloud artifacts docker images delete \
+  asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/frontend-service \
+  --delete-tags
+  
+# list all repo
+gcloud artifacts repositories list \   
+  --project=franklin-product-web-app-1
+
+# check repo is clean
+gcloud artifacts docker images list \
+  asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo \
+  --format="value(name)"
+  
+docker rmi -f 67d68f60dec7
+
+```
+
+
+
+```
+franklin@Franklins-MacBook-Pro web-ai % gcloud auth configure-docker asia-docker.pkg.dev
+Adding credentials for: asia-docker.pkg.dev
+After update, the following will be written to your Docker config file located 
+at [/Users/franklin/.docker/config.json]:
+ {
+  "credHelpers": {
+    "asia-docker.pkg.dev": "gcloud"
+  }
+}
+```
+
+
+
+Network Connector
+
+```
+gcloud compute networks vpc-access connectors create web-app1-connector \
+    --region asia-east1 \
+    --network default \
+    --range 10.8.0.0/16
+    
+# connect cloud run
+gcloud run services update [SERVICE_NAME] \
+    --vpc-connector web-app1-connector \
+    --region asia-east1
+
+# update mysql
+gcloud sql instances patch [INSTANCE_NAME] \
+    --network=default \
+    --assign-ip
+
+```
+
+
+
+
+
+Cloud DB 
+
+MySQL
+
+
+
+```bash
+# check sql instance
+gcloud sql instances list
+
+# connecti with cloud sql
+gcloud sql connect mysql8-web-database --user=root
+
+# test mysql connection on cloud
+mysql -h PUBLIC_IP -u dbuser -p
+```
+
+
+
+Cloud run
+
+```bash
+# see deployed services
+gcloud run services list --region=asia-east1
+
+# delete service
+gcloud run services delete web-frontend --region=asia-east1
+
+# find ar
+gcloud artifacts repositories list
+
+# find images with repo
+gcloud artifacts docker images list asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo
+
+```
+
+
+
+Cloud SQL Auth Proxy
+
+```
+curl -o cloud_sql_proxy https://dl.google.com/cloudsql/cloud_sql_proxy.darwin.arm64
+
+chmod +x cloud_sql_proxy
+
+# move to PATH
+sudo mv cloud_sql_proxy /usr/local/bin/
+
+```
+
+
+
+To connect cloud sql with cloud run
+
+```bash
+gcloud run services describe backend-service \
+  --region asia-east1 \
+  --format="value(spec.template.spec.serviceAccountName)"
+
+# 199717960334-compute@developer.gserviceaccount.com
+
+gcloud projects add-iam-policy-binding franklin-product-web-app-1 \
+  --member="serviceAccount:199717960334-compute@developer.gserviceaccount.com" \
+  --role="roles/cloudsql.client"
+
+# redeploy
+gcloud run deploy backend-service \
+  --image asia-east1-docker.pkg.dev/franklin-product-web-app-1/web-app-1-repo/web-backend:0.0.1 \
+  --region asia-east1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --add-cloudsql-instances franklin-product-web-app-1:asia-east1:mysql8-web-database
+
+```
+
+
+
+
+
+Error
+
+> Cloud sql is working normally, public ip has been set. Root user is set with %.
+>
+> The problem is I could get access to cloud sql locally using cloud_sql_proxy, but I cannot get access to db from backend application. I tested `loggin` api using postman, and failed. Since there is no restriction on logging, the only problem is I cannot access to db using application.yml setting on database url.
+>
+> And I found this error shows up at very early time when I first test this public ip.
+
+```
+Access denied for user 'root'@'38.246.114.101' (using password: YES)
+	at com.mysql.cj.jdbc.exceptions.SQLError.createSQLException(SQLError.java:121)
+	at com.mysql.cj.jdbc.exceptions.SQLExceptionsMapping.translateException(SQLExceptionsMapping.java:114)
+	at com.mysql.cj.jdbc.ConnectionImpl.createNewIO(ConnectionImpl.java:839)
+	at com.mysql.cj.jdbc.ConnectionImpl.<init>(ConnectionImpl.java:415)
+	at com.mysql.cj.jdbc.ConnectionImpl.getInstance(ConnectionImpl.java:237)
+	at com.mysql.cj.jdbc.NonRegisteringDriver.connect(NonRegisteringDriver.java:180)
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:144)
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:370)
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:207)
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:488)
+	at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:576)
+	at com.zaxxer.hikari.pool.HikariPool.<init>(HikariPool.java:97)
+	at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:111)
+	at org.springframework.jdbc.datasource.DataSourceUtils.fetchConnection(DataSourceUtils.java:160)
+	at org.springframework.jdbc.datasource.DataSourceUtils.doGetConnection(DataSourceUtils.java:118)
+	at org.springframework.jdbc.datasource.DataSourceUtils.getConnection(DataSourceUtils.java:81)
+	... 77 more
+Current holder data: null
+Current Holder stored data has been removed.
+```
+
+`Access denied for user 'root'@'38.246.114.101' (using password: YES)` really gives a lot information. In some way, the backend send the request and somehow got denied from cloud sql. 
+Therefore, I carefully looked through every single part on mysql settings. And I found that under the security setting, I set unallowed to unencrypted network traffic  and only **allows SSL connections**. Suddenly, I realized that I don't even set up a ssl certification yet. Then, a simple click and everything solved. A problem stucked my for a week finially solved just in seconds. 
+
+Web-app1 finally finished and I will continue
+
+.. to the next stop -- NBAgent!
