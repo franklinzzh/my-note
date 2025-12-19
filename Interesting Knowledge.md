@@ -1,6 +1,6 @@
 # Interesting Knowledge
 
-### - XOR
+##### - XOR
 
 ###### AND
 
@@ -32,13 +32,50 @@
 
 
 
-### - 子集
+##### - 子集
 
 Subset(子集)：不连续
 
 Subsequence(子序列)：按顺序 但可不连续
 
 Subarray(子数组)：必须连续
+
+
+
+##### Bit manipulation
+
+<< >> all return the result as integer
+
+`val << 1 | root.val` : add 0 in the end and replace with root.val
+
+
+
+##### Map forloop
+
+1. `entrySet()`
+
+```java
+for (Map.Entry<K, V> entry : map.entrySet()) {
+		K key = entry.getKey();
+		V val = entry.getValue();
+}
+```
+
+> efficient; easy to break/continue
+
+2. `Map.forEach(lambda)`
+
+```java
+map.forEach((key, value) -> {
+    // do something with key and value
+});
+```
+
+> Concise
+>
+> Cannot use break/continue
+>
+> In lambda, local variables have to be effectively final
 
 
 
